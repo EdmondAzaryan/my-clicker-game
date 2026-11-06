@@ -1,97 +1,456 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мини-Кликер</title>
-    <!-- Подключаем библиотеку Telegram -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body {
-            background-color: #1a1a2e;
-            color: white;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            user-select: none;
-        }
-        .score {
-            font-size: 48px;
-            font-weight: bold;
-            color: #e94560;
-            margin-bottom: 20px;
-        }
-        .click-btn {
-            background-color: #0f3460;
-            border: 4px solid #e94560;
-            border-radius: 50%;
-            width: 200px;
-            height: 200px;
-            font-size: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 0 20px #e94560;
-            transition: transform 0.1s;
-        }
-        .click-btn:active {
-            transform: scale(0.95);
-        }
-        .info {
-            margin-top: 30px;
-            font-size: 14px;
-            color: #888;
-            text-align: center;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Grand Auto</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+/* --- БАЗОВЫЕ СТИЛИ --- */
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#eaebef;color:#333;font-size:13px;overflow-x:hidden;width:100%}
+header{background:#1c1c1e;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:8px 10px;height:55px;position:sticky;top:0;z-index:100}
+.h-left{display:flex;align-items:center;gap:10px}
+.back-btn{color:#3b99fc;font-weight:bold;cursor:pointer;background:none;border:none;font-size:12px;display:none}
+.logo{display:flex;align-items:center;gap:5px;font-size:18px;font-weight:800}
+.logo-ic{background:#e31e24;color:#fff;width:22px;height:22px;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:12px;font-style:italic}
+.logo span{color:#e31e24}
+.h-right{display:flex;align-items:center;gap:8px}
+.bal{text-align:right;line-height:1.1;margin-right:5px}
+.bal-amt{font-size:14px;font-weight:bold}
+.bal-lbl{font-size:9px;color:#e31e24;font-weight:bold}
+.btn-t{padding:7px 10px;border-radius:4px;border:none;font-weight:600;font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer}
+.btn-dark{background:#4a4a4a;color:#fff}
+.btn-red{background:#e31e24;color:#fff}
+
+/* --- КОНТЕЙНЕР --- */
+.container{padding:10px;width:100%;max-width:1200px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+
+/* --- ГЛАВНАЯ --- */
+.s-panel{display:flex;gap:5px;margin-bottom:10px}
+.s-box{flex:1;display:flex;align-items:center;background:#d5d7db;border-radius:4px;padding:0 8px}
+.s-box input{width:100%;background:transparent;border:none;padding:10px 0;font-size:12px;outline:none}
+.p-box{flex:1;display:flex;align-items:center;justify-content:center;background:#d5d7db;border-radius:4px;padding:0 5px;gap:5px;cursor:pointer}
+.p-box span{color:#555;font-size:10px}
+.p-box input{width:40px;background:transparent;border:none;padding:10px 0;font-size:11px;text-align:center;outline:none;pointer-events:none}
+.sort-box{flex:1;display:flex;align-items:center;background:#d5d7db;border-radius:4px;padding:0 8px}
+.sort-box select{width:100%;background:transparent;border:none;padding:10px 0;font-size:11px;outline:none;appearance:none}
+.carousel{background:#fceea8;border-radius:6px;padding:8px;display:flex;align-items:center;gap:5px;margin-bottom:20px;position:relative}
+.c-btn{background:#fff5cc;border:none;border-radius:4px;width:25px;height:100px;font-size:16px;color:#333;cursor:pointer;display:flex;justify-content:center;align-items:center;z-index:2;flex-shrink:0}
+.c-track{display:flex;gap:5px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;flex:1;padding-bottom:5px}
+.c-track::-webkit-scrollbar{display:none}
+.c-track .card{min-width:120px;max-width:120px}
+.page-ind{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#fceea8;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:bold;color:#555;border:1px solid #e5d48f;cursor:pointer;z-index:2}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.card{background:#fff;border-radius:6px;padding:8px;display:flex;flex-direction:column;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.img-box{height:45px;display:flex;justify-content:center;align-items:center;margin-bottom:5px}
+.img-box img{max-height:100%;max-width:100%;object-fit:contain}
+.price-tag{background:#e31e24;color:#fff;font-weight:bold;font-size:9px;padding:2px 5px;border-radius:3px;align-self:flex-start;margin-bottom:4px;white-space:nowrap}
+.card-title{font-size:10px;font-weight:600;color:#222;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+/* --- ПОДАЧА --- */
+.step-head{display:flex;align-items:center;gap:10px;margin-bottom:15px}
+.step-txt{font-size:14px;color:#666}
+.cars-list{display:flex;gap:10px;flex-wrap:wrap}
+.sell-card{background:#fff;border-radius:6px;padding:10px;width:calc(50% - 5px);display:flex;flex-direction:column;align-items:center;border:2px solid transparent;cursor:pointer}
+.sell-card img{height:60px;object-fit:contain;margin-bottom:5px}
+.sell-card .card-title{font-size:12px;width:100%;text-align:left}
+.cfg-block{background:#fff;border-radius:6px;padding:15px;margin-bottom:10px}
+.cfg-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.cfg-lbl{font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px}
+.check{color:#e31e24;font-size:16px}
+.cfg-cost{color:#999;font-weight:bold;font-size:14px}
+.days-grp{display:flex;gap:5px}
+.day-btn{width:35px;height:35px;border:none;border-radius:4px;background:#e5e5e5;font-weight:bold;font-size:12px;color:#555;cursor:pointer}
+.day-btn.active{background:#e31e24;color:#fff}
+.price-inp{width:100%;padding:12px;background:#d5d7db;border:none;border-radius:4px;font-size:14px;outline:none;text-align:right}
+.total-row{display:flex;justify-content:space-between;align-items:center;margin:15px 0;font-size:14px;color:#555}
+.total-row strong{color:#000;font-size:18px}
+.btn-pub{width:100%;padding:14px;background:#d5d7db;color:#999;border:none;border-radius:4px;font-size:15px;font-weight:bold;cursor:not-allowed}
+.btn-pub.ready{background:#e31e24;color:#fff;cursor:pointer}
+
+/* --- ЭКРАН ДЕТАЛЕЙ --- */
+.detail-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.detail-title{font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
+.btn-view{background-color:#e31e24;color:white;padding:8px 14px;border-radius:4px;font-weight:600;border:none;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px}
+.detail-layout{display:flex;gap:15px;align-items:flex-start}
+@media (max-width: 800px) { .detail-layout { flex-direction: column; } }
+.detail-left{width:45%;display:flex;flex-direction:column;gap:15px}
+@media (max-width: 800px) { .detail-left { width:100%; } }
+.image-card{background:white;border-radius:8px;padding:20px;display:flex;flex-direction:column;align-items:center;position:relative;min-height:200px;justify-content:center}
+.image-card img{width:100%;max-height:140px;object-fit:contain;margin-bottom:25px}
+.date-text{color:#999;font-size:12px;position:absolute;bottom:15px}
+
+.price-action-card{display:flex;justify-content:space-between;align-items:center;background:transparent;padding:5px 0}
+.price-info{display:flex;flex-direction:column;text-align:center;width:100%}
+.price-label{color:#888;font-size:12px;margin-bottom:3px}
+.price-value{color:#e31e24;font-size:18px;font-weight:bold}
+
+.buy-box-layout{display:flex;justify-content:space-between;align-items:center;width:100%;gap:10px}
+.btn-buy-red{background-color:#e31e24;color:white;padding:10px 22px;border-radius:4px;font-weight:600;font-size:13px;border:none;cursor:pointer}
+
+.detail-right{width:55%;background:white;border-radius:8px;padding:20px}
+@media (max-width: 800px) { .detail-right { width:100%; } }
+.spec-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13px}
+.spec-label{color:#888}
+.spec-value{color:#222;font-weight:500}
+.divider{height:1px;background-color:#e0e0e0;margin:10px 0}
+.level-bar-container{display:flex;gap:4px}
+.level-segment{width:22px;height:5px;background-color:#e0e0e0;border-radius:3px}
+.level-segment.filled{background-color:#f1c40f}
+
+/* Уведомления */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:6px;font-weight:bold;opacity:0;pointer-events:none;transition:.3s;z-index:2000;font-size:12px}
+#toast.show{opacity:1;bottom:30px}
+</style>
 </head>
 <body>
 
-    <div class="score" id="score">0</div>
-    
-    <div class="click-btn" id="clickBtn">
-        💎
+<header>
+<div class="h-left">
+<button class="back-btn" id="h-back" onclick="goBack()">‹ Назад</button>
+<div class="logo"><div class="logo-ic">e</div><div>grand<span>auto</span></div></div>
+</div>
+<div class="h-right">
+<div class="bal"><div class="bal-amt" id="u-bal">0$</div><div class="bal-lbl">БАЛАНС</div></div>
+<button class="btn-t btn-dark" onclick="openMyAds()">📄 Мои</button>
+<button class="btn-t btn-red" onclick="openSellMenu()">➕ Подать</button>
+</div>
+</header>
+
+<div id="page-main" class="container page active">
+<div class="s-panel">
+<div class="s-box"><span>🔍</span><input type="text" id="search-name" placeholder="Поиск" oninput="renderMain()"></div>
+<div class="p-box" onclick="openFilterModal()"><span>Цена от</span><input type="number" id="f-min" placeholder="0" readonly><span>до</span><input type="number" id="f-max" placeholder="0" readonly></div>
+<div class="sort-box"><select id="sort-sel" onchange="renderMain()"><option value="default">По убыванию</option><option value="price_asc">По возрастанию</option></select></div>
+</div>
+<div class="carousel">
+<button class="c-btn" onclick="scrollCar(-1)">‹</button>
+<div class="c-track" id="car-top"></div>
+<button class="c-btn" onclick="scrollCar(1)">›</button>
+<div class="page-ind" id="car-ind" onclick="toggleCar()">1 / 2</div>
+</div>
+<div class="grid" id="main-grid"></div>
+</div>
+
+<div id="page-my" class="container page">
+<h2 style="text-align:center; margin: 15px 0;">Мои объявления</h2>
+<div class="grid" id="my-grid"></div>
+</div>
+
+<div id="page-step1" class="container page">
+<div class="step-head"><button class="btn-t btn-dark" onclick="goBack()">Назад</button><div class="step-txt"><b>Шаг 1/2</b><br>Выберите автомобиль из гаража</div></div>
+<div class="cars-list" id="garage-grid"></div>
+</div>
+
+<div id="page-step2" class="container page">
+<div class="step-head"><button class="btn-t btn-dark" onclick="showPage('page-step1')">Назад</button><div class="step-txt"><b>Шаг 2/2</b><br>Настройте детали</div></div>
+<div class="cfg-block">
+<div class="cfg-row">
+<div class="cfg-lbl"><span class="check">✔</span> Срок размещения</div>
+<div class="days-grp">
+<button class="day-btn active" onclick="selDays(this,1)">1</button>
+<button class="day-btn" onclick="selDays(this,2)">2</button>
+<button class="day-btn" onclick="selDays(this,3)">3</button>
+</div>
+</div>
+<div class="cfg-row" style="justify-content:flex-end"><span class="cfg-cost" id="days-cost">+5 000$</span></div>
+</div>
+<div class="cfg-block">
+<div class="cfg-lbl" style="font-weight:400;margin-bottom:10px">Цена продажи</div>
+<input type="number" class="price-inp" id="sell-price" value="0" placeholder="0" oninput="checkPrice()">
+</div>
+<div class="total-row">К оплате <strong id="total-cost">5 000$</strong></div>
+<button class="btn-pub" id="pub-btn" onclick="confirmPub()">Опубликовать</button>
+</div>
+
+<div id="page-detail" class="container page">
+    <div class="detail-header">
+        <div class="detail-title">
+            <button class="btn-t btn-dark" onclick="goBack()">Назад</button>
+            <span id="det-name">Bugatti Bolide</span>
+        </div>
+        <button class="btn-view" onclick="goBack()">👁 Посмотреть</button>
     </div>
 
-    <div class="info">
-        Нажимай на кристалл, чтобы зарабатывать очки!<br>
-        При выходе очки сохранятся.
-    </div>
+    <div class="detail-layout">
+        <div class="detail-left">
+            <div class="image-card">
+                <img src="" id="det-img" alt="Car">
+                <div class="date-text" id="det-date">Продается до 2 ноября</div>
+            </div>
 
-    <script>
-        // Инициализация Telegram WebApp
-        let tg = window.Telegram.WebApp;
-        tg.expand(); // Разворачиваем на весь экран
+            <div class="price-action-card" id="det-action-buy" style="display:none;">
+                <div class="buy-box-layout">
+                    <div class="price-info" style="text-align:left;">
+                        <span class="price-label">Стоимость на дроме</span>
+                        <span class="price-value" id="det-price-buy">0$</span>
+                    </div>
+                    <button class="btn-buy-red" onclick="buyCar()">купить</button>
+                </div>
+            </div>
 
-        let score = 0;
-        let scoreElement = document.getElementById('score');
-        let clickBtn = document.getElementById('clickBtn');
+            <div class="price-action-card" id="det-action-own" style="display:none;">
+                <div class="buy-box-layout">
+                    <div class="price-info" style="text-align:left;">
+                        <span class="price-label">Стоимость на дроме</span>
+                        <span class="price-value" id="det-price-own">0$</span>
+                    </div>
+                    <button class="btn-buy-red" onclick="removeMyAd()">Снять</button>
+                </div>
+            </div>
+        </div>
 
-        // Обработка клика
-        clickBtn.addEventListener('click', () => {
-            score++;
-            scoreElement.innerText = score;
+        <div class="detail-right">
+            <div class="spec-row"><span class="spec-label">Владелец</span><span class="spec-value" id="det-seller">Jonatan_Edgar</span></div>
+            <div class="spec-row"><span class="spec-label">Гос. стоимость</span><span class="spec-value" id="det-gov-price">110 000 000$</span></div>
+            <div class="spec-row"><span class="spec-label">Гос. номер</span><span class="spec-value" id="det-number">-</span></div>
+            <div class="spec-row"><span class="spec-label">Пробег</span><span class="spec-value" id="det-mileage">7 км</span></div>
+            <div class="spec-row"><span class="spec-label">Владельцев</span><span class="spec-value" id="det-owners">10</span></div>
+            <div class="spec-row"><span class="spec-label">Цвет фар</span><span class="spec-value"></span></div>
             
-            // Вибрация (если поддерживается)
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('light');
-            }
-        });
+            <div class="divider"></div>
 
-        // Отправка данных боту при закрытии (MainButton)
-        tg.MainButton.setText("Сохранить и выйти");
-        tg.MainButton.show();
-        
-        tg.MainButton.onClick(() => {
-            // Отправляем данные боту
-            tg.sendData(JSON.stringify({ score: score }));
-            tg.close();
-        });
-    </script>
+            <div class="spec-row"><span class="spec-label">Двигатель</span><div style="display:flex;align-items:center;gap:10px"><span id="det-engine-txt" class="spec-value">5 Ур.</span><div class="level-bar-container" id="det-engine-bar"></div></div></div>
+            <div class="spec-row"><span class="spec-label">Турбонаддув</span><div style="display:flex;align-items:center;gap:10px"><span id="det-turbo-txt" class="spec-value">3 Ур.</span><div class="level-bar-container" id="det-turbo-bar"></div></div></div>
+            <div class="spec-row"><span class="spec-label">Гидравлика</span><div style="display:flex;align-items:center;gap:10px"><span id="det-hydro-txt" class="spec-value">0 Ур.</span><div class="level-bar-container" id="det-hydro-bar"></div></div></div>
+            <div class="spec-row"><span class="spec-label">Чип</span><div style="display:flex;align-items:center;gap:10px"><span id="det-chip-txt" class="spec-value">3 Ур.</span><div class="level-bar-container" id="det-chip-bar"></div></div></div>
+            <div class="spec-row"><span class="spec-label">Тормоза</span><div style="display:flex;align-items:center;gap:10px"><span id="det-brakes-txt" class="spec-value">3 Ур.</span><div class="level-bar-container" id="det-brakes-bar"></div></div></div>
+        </div>
+    </div>
+</div>
+
+<div id="toast">Текст</div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+const DEFAULT_CARS = {
+    "Ferrari 296 GTB": "https://pngimg.com/uploads/ferrari/ferrari_PNG102812.png",
+    "BMW M3 G80": "https://pngimg.com/uploads/bmw/bmw_PNG1701.png",
+    "McLaren 720s": "https://pngimg.com/uploads/mclaren/mclaren_PNG28.png",
+    "Mercedes AMG GT": "https://pngimg.com/uploads/mercedes/mercedes_PNG1806.png",
+    "Mercedes W124": "https://pngimg.com/uploads/mercedes/mercedes_PNG1808.png",
+    "Magnaris 2107": "https://pngimg.com/uploads/lada/lada_PNG27.png"
+};
+const DEF_IMG = "https://cdn-icons-png.flaticon.com/512/3202/3202926.png";
+
+function getImg(carName, dbImg) {
+    if (dbImg && dbImg.length > 5) return dbImg;
+    return DEFAULT_CARS[carName] || DEF_IMG;
+}
+
+const API_URL = "http://127.0.0.1:8000"; 
+const USER_ID = new URLSearchParams(window.location.search).get('uid') || tg.initDataUnsafe?.user?.id || 1;
+
+let allAds = [], myAdsList = [], myCars = [];
+let currentAd = null, sellCar = null, selDaysVal = 1, hist = ['page-main'], carPage = 0;
+let modalMode = 'buy';
+
+function money(a) { return (a || 0).toLocaleString('ru-RU') + '$'; }
+function toast(m) { let t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+function updBal() { 
+    fetch(`${API_URL}/api/user_balance?user_id=${USER_ID}`)
+        .then(res => res.json())
+        .then(data => document.getElementById('u-bal').textContent = money(data.balance || 0))
+        .catch(() => document.getElementById('u-bal').textContent = "0$");
+}
+function showPage(id) { 
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); 
+    document.getElementById(id).classList.add('active'); 
+    if(hist[hist.length-1]!==id) hist.push(id); 
+    document.getElementById('h-back').style.display = id==='page-main'?'none':'block'; 
+    window.scrollTo(0,0); 
+}
+function goBack() { if(hist.length>1){ hist.pop(); let prev=hist[hist.length-1]; document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(prev).classList.add('active'); document.getElementById('h-back').style.display=prev==='page-main'?'none':'block'; } else showPage('page-main'); }
+
+function scrollCar(dir) { let tr=document.getElementById('car-top'); if(dir===1){carPage=1;tr.scrollLeft=tr.scrollWidth}else{carPage=0;tr.scrollLeft=0} updCarInd(); }
+function toggleCar() { let tr=document.getElementById('car-top'); if(carPage===0){carPage=1;tr.scrollLeft=tr.scrollWidth}else{carPage=0;tr.scrollLeft=0} updCarInd(); }
+function updCarInd() { document.getElementById('car-ind').textContent=(carPage+1)+' / 2'; }
+
+function loadAds() {
+    fetch(`${API_URL}/api/all_ads`)
+        .then(res => res.json())
+        .then(data => { allAds = data; renderMain(); })
+        .catch(err => console.error(err));
+}
+
+function renderMain() {
+    let q=document.getElementById('search-name').value.toLowerCase(), min=parseInt(document.getElementById('f-min').value)||0, max=parseInt(document.getElementById('f-max').value)||Infinity, sort=document.getElementById('sort-sel').value;
+    let f = allAds.filter(a => a.name.toLowerCase().includes(q) && a.price >= min && a.price <= max);
+    if(sort==='price_asc') f.sort((a,b)=>a.price-b.price); else f.sort((a,b)=>b.price-a.price);
+    
+    document.getElementById('car-top').innerHTML = f.map(a => `
+        <div class="card" onclick="openDetail(${a.id}, 'buy')">
+            <div class="img-box"><img src="${getImg(a.name, a.image_url)}" onerror="this.src='${DEF_IMG}'"></div>
+            <div class="price-tag">${money(a.price)}</div>
+            <div class="card-title">${a.name}</div>
+        </div>
+    `).join('');
+    carPage=0; updCarInd(); document.getElementById('car-top').scrollLeft=0;
+    
+    let g = document.getElementById('main-grid');
+    g.innerHTML = f.length===0 ? '<div style="grid-column:span 4;text-align:center;padding:20px;color:#888">Объявлений пока нет</div>' : f.map(a => `
+        <div class="card" onclick="openDetail(${a.id}, 'buy')">
+            <div class="img-box"><img src="${getImg(a.name, a.image_url)}" onerror="this.src='${DEF_IMG}'"></div>
+            <div class="price-tag">${money(a.price)}</div>
+            <div class="card-title">${a.name}</div>
+        </div>
+    `).join('');
+}
+
+function openDetail(id, mode) {
+    let a;
+    if(mode === 'buy') { a = allAds.find(x => x.id === id); modalMode = 'buy'; } 
+    else { a = myAdsList.find(x => x.id === id); modalMode = 'my_ad'; }
+    
+    if(!a) return; 
+    currentAd = a;
+    
+    document.getElementById('det-name').textContent = a.name;
+    document.getElementById('det-img').src = getImg(a.name, a.image_url);
+    document.getElementById('det-seller').textContent = a.seller_name || "Jonatan_Edgar";
+    document.getElementById('det-gov-price').textContent = money(a.gov_price || (a.price ? Math.floor(a.price * 0.5) : 110000000)); 
+    document.getElementById('det-mileage').textContent = (a.mileage || 7) + " км";
+    document.getElementById('det-owners').textContent = a.owners || 10;
+    document.getElementById('det-number').textContent = a.number || "-";
+    
+    function renderBar(barId, txtId, lvl) {
+        document.getElementById(txtId).textContent = lvl + " Ур.";
+        let b = document.getElementById(barId); b.innerHTML = '';
+        for(let i=0; i<5; i++) {
+            let seg = document.createElement('div');
+            seg.className = 'level-segment' + (i < lvl ? ' filled' : '');
+            b.appendChild(seg);
+        }
+    }
+    renderBar('det-engine-bar', 'det-engine-txt', a.engine !== undefined ? a.engine : 5);
+    renderBar('det-turbo-bar', 'det-turbo-txt', a.turbo !== undefined ? a.turbo : 3);
+    renderBar('det-hydro-bar', 'det-hydro-txt', a.hydro !== undefined ? a.hydro : 0);
+    renderBar('det-chip-bar', 'det-chip-txt', a.chip !== undefined ? a.chip : 3);
+    renderBar('det-brakes-bar', 'det-brakes-txt', a.brakes !== undefined ? a.brakes : 3);
+
+    let d = new Date(); d.setDate(d.getDate() + 2);
+    const months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+    document.getElementById('det-date').textContent = `Продается до ${d.getDate()} ${months[d.getMonth()]}`;
+
+    let ownBox = document.getElementById('det-action-own');
+    let buyBox = document.getElementById('det-action-buy');
+    
+    if(modalMode === 'my_ad' || a.seller_id == USER_ID) {
+        ownBox.style.display = 'flex';
+        buyBox.style.display = 'none';
+        document.getElementById('det-price-own').textContent = money(a.price);
+    } else {
+        ownBox.style.display = 'none';
+        buyBox.style.display = 'flex';
+        document.getElementById('det-price-buy').textContent = money(a.price);
+    }
+    
+    showPage('page-detail');
+}
+
+function buyCar() { 
+    if(!currentAd) return;
+    fetch(`${API_URL}/api/buy_car`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: USER_ID, ad_id: currentAd.id })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'success') {
+            toast("✅ Машина куплена!");
+            goBack(); loadAds(); updBal();
+        } else { toast("❌ " + (data.message || "Ошибка")); }
+    })
+    .catch(err => toast("❌ Ошибка сервера"));
+}
+
+function removeMyAd() {
+    if(!currentAd) return;
+    fetch(`${API_URL}/api/remove_ad`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: USER_ID, ad_id: currentAd.id })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'success') {
+            toast("✅ Снято с продажи!");
+            goBack(); openMyAds(); loadAds();
+        } else { toast("❌ Ошибка"); }
+    })
+    .catch(err => toast("❌ Ошибка сервера"));
+}
+
+function openSellMenu() {
+    showPage('page-step1');
+    let g = document.getElementById('garage-grid');
+    g.innerHTML = '<div style="text-align:center; width:100%; padding:20px; color:#888;">Загрузка машин...</div>';
+    fetch(`${API_URL}/api/my_cars?user_id=${USER_ID}`)
+        .then(res => res.json())
+        .then(data => {
+            myCars = data; 
+            if(myCars.length === 0) { g.innerHTML = '<div style="text-align:center; width:100%; padding:20px; color:#888;">У вас нет машин</div>'; return; }
+            g.innerHTML = myCars.map(c => `
+                <div class="sell-card" onclick="startSell('${c.name}')">
+                    <img src="${getImg(c.name, c.image_url)}" onerror="this.src='${DEF_IMG}'">
+                    <div class="card-title">${c.name}</div>
+                    <div style="font-size:10px; color:#888; align-self:flex-start;">⚡ ${c.speed} км/ч · ⭐ ${c.stars}</div>
+                </div>
+            `).join('');
+        })
+        .catch(err => g.innerHTML = '<div style="text-align:center; color:red;">Ошибка сервера</div>');
+}
+
+function startSell(name) { sellCar=name;selDaysVal=1;document.querySelectorAll('.day-btn').forEach((b,i)=>{if(i===0)b.classList.add('active');else b.classList.remove('active')});updPrice(1);document.getElementById('sell-price').value='0';document.getElementById('pub-btn').classList.remove('ready');showPage('page-step2'); }
+function selDays(btn,d) { document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');selDaysVal=d;updPrice(d); }
+function updPrice(d) { let c=d*5000;document.getElementById('days-cost').textContent='+'+money(c);document.getElementById('total-cost').textContent=money(c); }
+function checkPrice() { let p=parseInt(document.getElementById('sell-price').value)||0,b=document.getElementById('pub-btn');if(p>0){b.classList.add('ready');b.disabled=false}else{b.classList.remove('ready');b.disabled=true} }
+
+function confirmPub() { 
+    let p = parseInt(document.getElementById('sell-price').value) || 0;
+    if(p <= 0) return;
+    fetch(`${API_URL}/api/sell_car`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: USER_ID, car_name: sellCar, price: p, days: selDaysVal })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'success') { toast("✅ Объявление создано!"); showPage('page-main'); loadAds(); updBal(); } 
+        else { toast("❌ " + (data.message || "Ошибка")); }
+    })
+    .catch(err => toast("❌ Ошибка при создании"));
+}
+
+function openMyAds() {
+    showPage('page-my');
+    let g = document.getElementById('my-grid');
+    g.innerHTML = '<div style="grid-column:span 4;text-align:center;padding:20px;color:#888">Загрузка...</div>';
+    fetch(`${API_URL}/api/my_ads?user_id=${USER_ID}`)
+        .then(res => res.json())
+        .then(data => {
+            myAdsList = data;
+            if(data.length === 0) { g.innerHTML = '<div style="grid-column:span 4;text-align:center;padding:20px;color:#888">У вас нет объявлений</div>'; }
+            else {
+                g.innerHTML = data.map(a => `
+                    <div class="card" onclick="openDetail(${a.id}, 'my_ad')">
+                        <div class="img-box"><img src="${getImg(a.name, a.image_url)}" onerror="this.src='${DEF_IMG}'"></div>
+                        <div class="price-tag">${money(a.price)}</div>
+                        <div class="card-title">${a.name}</div>
+                    </div>
+                `).join('');
+            }
+        })
+        .catch(err => g.innerHTML = '<div style="grid-column:span 4;text-align:center;color:red">Ошибка</div>');
+}
+
+function openFilterModal() {}
+function closeFilterModal() {}
+function applyFilter() {}
+
+updBal(); loadAds(); 
+</script>
 </body>
 </html>
