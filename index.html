@@ -3,296 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Geometry Jump</title>
+    <title>Geometry Dash Widget</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body {
-            background-color: #1a1a24;
+            background: #0f172a;
             color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: sans-serif;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
             overflow: hidden;
         }
-        #game-container {
+        #game-box {
             position: relative;
             width: 100%;
-            max-width: 450px;
-            height: 300px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border-radius: 12px;
+            height: 100%;
+            max-width: 480px;
+            max-height: 320px;
+            background: #1e293b;
+            border-radius: 8px;
             overflow: hidden;
-            border: 2px solid #333;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
-        canvas {
-            background: linear-gradient(to bottom, #111827, #1f2937);
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-        .ui-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.7);
+        canvas { width: 100%; height: 100%; display: block; }
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             z-index: 10;
         }
-        .ui-overlay.hidden {
-            display: none;
+        .hidden { display: none !important; }
+        h1 { font-size: 22px; color: #38bdf8; margin-bottom: 10px; }
+        button {
+            padding: 10px 24px; background: #e11d48; color: white;
+            border: none; border-radius: 6px; font-weight: bold; font-size: 14px;
+            cursor: pointer; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.4);
         }
-        h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-            color: #38bdf8;
-            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
-        }
-        p {
-            font-size: 14px;
-            color: #9ca3af;
-            margin-bottom: 20px;
-        }
-        .btn {
-            background: #0284c7;
-            color: #fff;
-            border: none;
-            padding: 12px 28px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
-        }
-        .btn:active {
-            transform: scale(0.95);
-        }
-        .score-board {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #f0fdf4;
-            z-index: 5;
-        }
+        button:active { transform: scale(0.95); }
+        .score { position: absolute; top: 8px; right: 12px; font-weight: bold; font-size: 14px; color: #f87171; }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <div class="score-board">Очки: <span id="score">0</span></div>
-        
-        <!-- Меню Старта / GameOver -->
-        <div id="start-screen" class="ui-overlay">
-            <h1>GEOMETRY JUMP</h1>
-            <p>Тапай по экрану, чтобы прыгать</p>
-            <button class="btn" onclick="startGame()">ИГРАТЬ</button>
-        </div>
+<div id="game-box">
+    <div class="score">ОЧКИ: <span id="score-val">0</span></div>
 
-        <div id="game-over-screen" class="ui-overlay hidden">
-            <h1 style="color: #ef4444;">ИГРА ОКОНЧЕНА</h1>
-            <p id="final-score">Ваш счет: 0</p>
-            <button class="btn" onclick="restartGame()">СНОВА</button>
-        </div>
-
-        <canvas id="gameCanvas" width="450" height="300"></canvas>
+    <div id="start-screen" class="overlay">
+        <h1>GEOMETRY DASH</h1>
+        <p style="font-size: 12px; color: #94a3b8; margin-bottom: 15px;">Жми на экран для прыжка</p>
+        <button onclick="startGame()">ИГРАТЬ</button>
     </div>
+
+    <div id="over-screen" class="overlay hidden">
+        <h1 style="color: #ef4444;">ВРЕЗАЛСЯ!</h1>
+        <p id="final-score" style="font-size: 13px; margin-bottom: 15px;">Счет: 0</p>
+        <button onclick="startGame()">СНОВА</button>
+    </div>
+
+    <canvas id="canvas" width="400" height="240"></canvas>
+</div>
 
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-const canvas = document.getElementById('gameCanvas');
+const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 let isPlaying = false;
 let score = 0;
-let animationId;
+let animId;
 
-// Игрок (Кубик)
-const player = {
-    x: 50,
-    y: 220,
-    size: 30,
-    color: '#38bdf8',
-    dy: 0,
-    gravity: 0.8,
-    jumpPower: -12,
-    isGrounded: false,
-    rotation: 0
-};
+const player = { x: 40, y: 160, size: 24, dy: 0, gravity: 0.75, jump: -10, grounded: false, rot: 0 };
+const groundY = 190;
+let spikes = [];
+let timer = 0;
 
-// Земля
-const groundY = 250;
-
-// Препятствия (Шипы)
-let obstacles = [];
-let obstacleTimer = 0;
-let speed = 5;
-
-// Обработка прыжка (Тап по экрану или клавиша Пробел)
-function jump() {
-    if (player.isGrounded && isPlaying) {
-        player.dy = player.jumpPower;
-        player.isGrounded = false;
+function doJump() {
+    if (player.grounded && isPlaying) {
+        player.dy = player.jump;
+        player.grounded = false;
     }
 }
 
-document.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    jump();
-});
-document.addEventListener('mousedown', jump);
-document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') jump();
-});
+document.addEventListener('touchstart', (e) => { e.preventDefault(); doJump(); });
+document.addEventListener('mousedown', doJump);
 
-function spawnObstacle() {
-    obstacles.push({
-        x: canvas.width,
-        y: groundY - 30,
-        width: 30,
-        height: 30
-    });
+function spawnSpike() {
+    spikes.push({ x: canvas.width, y: groundY - 24, w: 24, h: 24 });
 }
 
 function update() {
     if (!isPlaying) return;
 
-    // Гравитация и физика игрока
     player.dy += player.gravity;
     player.y += player.dy;
 
-    // Проверка приземления
     if (player.y + player.size >= groundY) {
         player.y = groundY - player.size;
         player.dy = 0;
-        player.isGrounded = true;
-        player.rotation = 0; // Сброс вращения
+        player.grounded = true;
+        player.rot = 0;
     } else {
-        player.rotation += 8; // Вращение в воздухе
+        player.rot += 10;
     }
 
-    // Генерация шипов
-    obstacleTimer++;
-    if (obstacleTimer > 80 + Math.random() * 40) {
-        spawnObstacle();
-        obstacleTimer = 0;
+    timer++;
+    if (timer > 70 + Math.random() * 40) {
+        spawnSpike();
+        timer = 0;
     }
 
-    // Движение шипов
-    for (let i = 0; i < obstacles.length; i++) {
-        let obs = obstacles[i];
-        obs.x -= speed;
+    for (let i = 0; i < spikes.length; i++) {
+        let s = spikes[i];
+        s.x -= 4.5;
 
-        // Проверка столкновения
-        if (
-            player.x < obs.x + obs.width &&
-            player.x + player.size > obs.x &&
-            player.y < obs.y + obs.height &&
-            player.y + player.size > obs.y
-        ) {
+        // Коллизия
+        if (player.x < s.x + s.w && player.x + player.size > s.x &&
+            player.y < s.y + s.h && player.y + player.size > s.y) {
             gameOver();
             return;
         }
 
-        // Удаление ушедших за экран шипов и начисление очков
-        if (obs.x + obs.width < 0) {
-            obstacles.splice(i, 1);
-            i--;
+        if (s.x + s.w < 0) {
+            spikes.splice(i, 1); i--;
             score += 10;
-            document.getElementById('score').textContent = score;
-            
-            // Увеличение сложности
-            if (score % 50 === 0) speed += 0.5;
+            document.getElementById('score-val').textContent = score;
         }
     }
 }
 
 function draw() {
-    // Очистка экрана
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Отрисовка земли
-    ctx.fillStyle = '#374151';
+    // Земля
+    ctx.fillStyle = '#334155';
     ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
-    ctx.fillStyle = '#22c55e';
-    ctx.fillRect(0, groundY, canvas.width, 4);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(0, groundY, canvas.width, 3);
 
-    // Отрисовка игрока с вращением
+    // Кубик
     ctx.save();
-    ctx.translate(player.x + player.size / 2, player.y + player.size / 2);
-    ctx.rotate((player.rotation * Math.PI) / 180);
-    ctx.fillStyle = player.color;
-    ctx.fillRect(-player.size / 2, -player.size / 2, player.size, player.size);
-    // Глаз на кубике
+    ctx.translate(player.x + player.size/2, player.y + player.size/2);
+    ctx.rotate((player.rot * Math.PI) / 180);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(-player.size/2, -player.size/2, player.size, player.size);
     ctx.fillStyle = '#fff';
-    ctx.fillRect(2, -8, 8, 8);
+    ctx.fillRect(2, -6, 6, 6);
     ctx.restore();
 
-    // Отрисовка шипов (Треугольники)
-    for (let obs of obstacles) {
+    // Шипы
+    for (let s of spikes) {
         ctx.fillStyle = '#ef4444';
         ctx.beginPath();
-        ctx.moveTo(obs.x, groundY);
-        ctx.lineTo(obs.x + obs.width / 2, obs.y);
-        ctx.lineTo(obs.x + obs.width, groundY);
+        ctx.moveTo(s.x, groundY);
+        ctx.lineTo(s.x + s.w / 2, s.y);
+        ctx.lineTo(s.x + s.w, groundY);
         ctx.closePath();
         ctx.fill();
     }
 }
 
-function gameLoop() {
+function loop() {
     update();
     draw();
-    if (isPlaying) {
-        animationId = requestAnimationFrame(gameLoop);
-    }
+    if (isPlaying) animId = requestAnimationFrame(loop);
 }
 
 function startGame() {
     document.getElementById('start-screen').classList.add('hidden');
-    resetData();
+    document.getElementById('over-screen').classList.add('hidden');
+    score = 0; spikes = []; player.y = 160; player.dy = 0;
+    document.getElementById('score-val').textContent = 0;
     isPlaying = true;
-    gameLoop();
+    loop();
 }
 
 function gameOver() {
     isPlaying = false;
-    cancelAnimationFrame(animationId);
+    cancelAnimationFrame(animId);
     document.getElementById('final-score').textContent = 'Ваш счет: ' + score;
-    document.getElementById('game-over-screen').classList.remove('hidden');
-}
-
-function restartGame() {
-    document.getElementById('game-over-screen').classList.add('hidden');
-    resetData();
-    isPlaying = true;
-    gameLoop();
-}
-
-function resetData() {
-    score = 0;
-    speed = 5;
-    obstacles = [];
-    player.y = 220;
-    player.dy = 0;
-    document.getElementById('score').textContent = score;
+    document.getElementById('over-screen').classList.remove('hidden');
 }
 </script>
 </body>
